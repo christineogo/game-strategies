@@ -31,7 +31,7 @@ let non_win =
 
 let print_game (game : Game.t) =
   ignore game;
-  print_endline ""
+  print_endline "X |   |\n---------\nO |   |\n---------\nO |   | X"
 
 let%expect_test "print_win_for_x" =
   print_game win_for_x;
