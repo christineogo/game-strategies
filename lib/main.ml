@@ -93,9 +93,49 @@ let available_moves (game : Game.t) : Position.t list =
   failwith "Implement me!" *)
 
 (* Exercise 2 *)
+
+let check_direction ~start ~delta ~length ~(game : Game.t) ~(piece : Piece.t) :
+    bool =
+  let game_kind = game.game_kind in
+  List.init length ~f:(fun i ->
+      let pos =
+        {
+          Position.row = start.Position.row + (i * delta.Position.row);
+          column = start.Position.column + (i * delta.Position.column);
+        }
+      in
+      Position.in_bounds ~game_kind pos
+      && String.equal (piece_to_string piece)
+           (piece_to_string (Map.find_exn game.board pos)))
+  (* (match (Map.find_exn game.board pos) with 
+    |start_piece -> true
+    |_ -> false) *)
+  |> List.for_all ~f:Fun.id
+
+let _check_for_win (position : Position.t) (game : Game.t) (piece : Piece.t) :
+    bool =
+  let size = Game_kind.board_length game.game_kind in
+  let directions =
+    [
+      { Position.row = 0; column = 1 };
+      { Position.row = 1; column = 0 };
+      { Position.row = 1; column = 1 };
+      (* Diagonal right*)
+      { Position.row = -1; column = 1 };
+      (* Diagonal left*)
+    ]
+  in
+
+  List.exists directions ~f:(fun delta ->
+      check_direction ~start:position ~delta ~length:size ~game ~piece)
+
 let evaluate (game : Game.t) : Evaluation.t =
   ignore game;
   failwith "Implement me!"
+(* if Map.existsi game.board ~f:(fun ~key:position ~data:_ -> not(Position.in_bounds ~game_kind: game.game_kind position)) then
+    Evaluation.Illegal_move
+  else 
+    if Map.fold ~init:None ~f:(~key:postion ~data:piece -> ) *)
 
 (* Exercise 3 *)
 let winning_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
