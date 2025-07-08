@@ -29,9 +29,25 @@ let non_win =
       ({ row = 2; column = 0 }, O);
     ]
 
+let piece_to_string = function Piece.X -> "X" | O -> "O"
+
 let print_game (game : Game.t) =
-  ignore game;
-  print_endline "X |   |\n---------\nO |   |\n---------\nO |   | X"
+  let game_size = Game_kind.board_length game.game_kind in
+  (* let board_skeleton = List.init (Game_kind.board_length game.game_kind + (Game_kind.board_length game.game_kind*3)) ~f:(fun _ -> "_") in *)
+
+  for row = 0 to game_size - 1 do
+    let row_pieces =
+      List.init game_size ~f:(fun col ->
+          let piece_pos = { Position.row; column = col } in
+          match Map.find game.board piece_pos with
+          | Some piece -> piece_to_string piece
+          | None -> " ")
+    in
+    let row_str = String.concat ~sep:" | " row_pieces in
+    print_endline row_str;
+    if row < game_size - 1 then print_endline "---------"
+  done
+(* print_endline "X |   |\n---------\nO |   |\n---------\nO |   | X" *)
 
 let%expect_test "print_win_for_x" =
   print_game win_for_x;
@@ -59,8 +75,22 @@ let%expect_test "print_non_win" =
 
 (* Exercise 1 *)
 let available_moves (game : Game.t) : Position.t list =
-  ignore game;
-  failwith "Implement me!"
+  let game_size = Game_kind.board_length game.game_kind in
+  let board_pieces =
+    List.init game_size ~f:(fun row ->
+        let row_pieces =
+          List.init game_size ~f:(fun col ->
+              let piece_pos = { Position.row; column = col } in
+              match Map.find game.board piece_pos with
+              | Some _ -> []
+              | None -> [ piece_pos ])
+        in
+        List.concat row_pieces)
+  in
+  List.concat board_pieces
+
+(* Map.filter game.board ~f:(fun )
+  failwith "Implement me!" *)
 
 (* Exercise 2 *)
 let evaluate (game : Game.t) : Evaluation.t =
