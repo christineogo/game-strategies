@@ -105,14 +105,12 @@ let check_direction ~start ~delta ~length ~(game : Game.t) ~(piece : Piece.t) :
         }
       in
       Position.in_bounds ~game_kind pos
+      && (match Map.find game.board pos with Some _ -> true | None -> false)
       && String.equal (piece_to_string piece)
            (piece_to_string (Map.find_exn game.board pos)))
-  (* (match (Map.find_exn game.board pos) with 
-    |start_piece -> true
-    |_ -> false) *)
   |> List.for_all ~f:Fun.id
 
-let _check_for_win (position : Position.t) (game : Game.t) (piece : Piece.t) :
+let check_for_win (position : Position.t) (game : Game.t) (piece : Piece.t) :
     bool =
   let size = Game_kind.board_length game.game_kind in
   let directions =
@@ -130,12 +128,26 @@ let _check_for_win (position : Position.t) (game : Game.t) (piece : Piece.t) :
       check_direction ~start:position ~delta ~length:size ~game ~piece)
 
 let evaluate (game : Game.t) : Evaluation.t =
-  ignore game;
-  failwith "Implement me!"
-(* if Map.existsi game.board ~f:(fun ~key:position ~data:_ -> not(Position.in_bounds ~game_kind: game.game_kind position)) then
-    Evaluation.Illegal_move
-  else 
-    if Map.fold ~init:None ~f:(~key:postion ~data:piece -> ) *)
+  (* ignore game;
+  failwith "Implement me!" *)
+  if
+    Map.existsi game.board ~f:(fun ~key:position ~data:_ ->
+        not (Position.in_bounds ~game_kind:game.game_kind position))
+  then Evaluation.Illegal_move
+  else
+    let potential_winner =
+      Map.fold game.board ~init:None ~f:(fun ~key:position ~data:piece acc ->
+          match acc with
+          | Some _ -> acc
+          | None ->
+              if check_for_win position game piece then Some piece else None)
+    in
+    match potential_winner with
+    | Some piece -> Evaluation.Game_over { winner = Some piece }
+    | None ->
+        if List.is_empty (available_moves game) then
+          Evaluation.Game_over { winner = None }
+        else Evaluation.Game_continues
 
 (* Exercise 3 *)
 let winning_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
@@ -165,7 +177,7 @@ let exercise_two =
      fun () ->
        let evaluation = evaluate win_for_x in
        print_s [%sexp (evaluation : Evaluation.t)];
-       let evaluation = evaluate win_for_x in
+       let evaluation = evaluate non_win in
        print_s [%sexp (evaluation : Evaluation.t)];
        return ())
 
